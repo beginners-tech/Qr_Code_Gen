@@ -149,42 +149,97 @@
       color: var(--text);
       box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
-    .label-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
+    .friendly-box {
+      background: #fcfbf9;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
     .field-label {
-      font-size: 13px;
+      display: block;
+      font-size: 12px;
       font-weight: 600;
       color: var(--text);
+      margin-bottom: 4px;
     }
-    .tag {
-      background: var(--accent-light);
-      color: #065f46;
-      border: 1px solid var(--accent-border);
-      padding: 2px 8px;
-      border-radius: 9999px;
+    .field-hint {
       font-size: 11px;
-      font-weight: 600;
+      color: var(--text-muted);
+      font-weight: normal;
     }
+    input[type="text"],
+    input[type="url"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="password"],
+    select,
     textarea {
       width: 100%;
-      padding: 12px 14px;
+      padding: 9px 12px;
       border: 1px solid #d6d3d1;
-      border-radius: 12px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      border-radius: 8px;
       font-size: 13px;
       color: var(--text);
-      resize: vertical;
-      min-height: 80px;
       background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    textarea:focus {
+    input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: var(--primary);
       box-shadow: 0 0 0 2px rgba(28,25,23,0.1);
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .checkbox-row input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    .checkbox-row label {
+      font-size: 12px;
+      color: #57534e;
+      cursor: pointer;
+    }
+    .payload-raw-bar {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .payload-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .raw-preview {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      background: #f5f5f4;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      word-break: break-all;
+      color: #44403c;
     }
     .divider {
       height: 1px;
@@ -413,7 +468,7 @@
         <div class="brand-icon">&#9638;</div>
         <div>
           <div class="brand-title">Permanent QR Code Generator</div>
-          <div class="brand-sub">Real raw link encoding &bull; Zero redirects &bull; Works forever</div>
+          <div class="brand-sub">Real direct link encoding &bull; Zero redirects &bull; Works forever</div>
         </div>
       </div>
       <div class="badge-standalone">
@@ -426,7 +481,7 @@
     <div class="grid-layout">
       <!-- Input Controls Column -->
       <div class="card">
-        <h2 class="card-title">Enter Link or Content</h2>
+        <h2 class="card-title">Enter Content</h2>
         <p class="card-desc">The real destination data is directly baked into the QR matrix according to ISO/IEC 18004.</p>
 
         <!-- Presets -->
@@ -453,12 +508,83 @@
           </button>
         </div>
 
-        <div class="label-row">
-          <span class="field-label">Direct Destination Payload</span>
-          <span class="tag">&#10003; Real Direct Link</span>
-        </div>
+        <!-- Friendly Structured Fields Container -->
+        <div class="friendly-box">
+          <!-- URL Form Section -->
+          <div id="section-url">
+            <div class="form-group">
+              <label class="field-label" for="input-url">Website Address (URL)</label>
+              <input type="url" id="input-url" value="https://example.com" placeholder="https://yourwebsite.com" oninput="computePayload()">
+            </div>
+          </div>
 
-        <textarea id="payload-input" placeholder="https://example.com" rows="3" oninput="renderQR()">https://example.com</textarea>
+          <!-- Wi-Fi Form Section -->
+          <div id="section-wifi" style="display: none;">
+            <div class="form-row form-group">
+              <div>
+                <label class="field-label" for="wifi-ssid">Network Name (SSID)</label>
+                <input type="text" id="wifi-ssid" value="MyHomeWiFi" placeholder="e.g. Home_Network" oninput="computePayload()">
+              </div>
+              <div>
+                <label class="field-label" for="wifi-security">Security Encryption</label>
+                <select id="wifi-security" onchange="toggleWifiPasswordView(); computePayload();">
+                  <option value="WPA" selected>WPA / WPA2 / WPA3</option>
+                  <option value="WEP">WEP (Legacy)</option>
+                  <option value="nopass">None (Open Network)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" id="wifi-pass-group">
+              <label class="field-label" for="wifi-pass">Network Password</label>
+              <input type="password" id="wifi-pass" value="SecretPassword123" placeholder="Enter Wi-Fi password" oninput="computePayload()">
+            </div>
+            <div class="checkbox-row">
+              <input type="checkbox" id="wifi-hidden" onchange="computePayload()">
+              <label for="wifi-hidden">Hidden network (SSID is not broadcasted)</label>
+            </div>
+          </div>
+
+          <!-- Email Form Section -->
+          <div id="section-email" style="display: none;">
+            <div class="form-group">
+              <label class="field-label" for="email-to">Recipient Email Address</label>
+              <input type="email" id="email-to" value="contact@example.com" placeholder="name@company.com" oninput="computePayload()">
+            </div>
+            <div class="form-group">
+              <label class="field-label" for="email-sub">Subject Line</label>
+              <input type="text" id="email-sub" value="Hello There" placeholder="e.g. Inquiry or Reservation" oninput="computePayload()">
+            </div>
+            <div class="form-group">
+              <label class="field-label" for="email-body">Pre-filled Body <span class="field-hint">(Optional)</span></label>
+              <textarea id="email-body" rows="2" placeholder="Hi, I would like to inquire about..." oninput="computePayload()"></textarea>
+            </div>
+          </div>
+
+          <!-- Phone Form Section -->
+          <div id="section-phone" style="display: none;">
+            <div class="form-group">
+              <label class="field-label" for="input-phone">Phone Number</label>
+              <input type="tel" id="input-phone" value="+15551234567" placeholder="+1 (555) 123-4567" oninput="computePayload()">
+            </div>
+          </div>
+
+          <!-- Text Form Section -->
+          <div id="section-text" style="display: none;">
+            <div class="form-group">
+              <label class="field-label" for="input-text">Plain Text / Serial / Note</label>
+              <textarea id="input-text" rows="3" placeholder="Enter any text to encode permanently..." oninput="computePayload()">Offline note stored directly inside the QR code.</textarea>
+            </div>
+          </div>
+
+          <!-- Encoded payload display -->
+          <div class="payload-raw-bar">
+            <div class="payload-meta-row">
+              <span>&#10003; Real Direct Link Encoded:</span>
+              <span id="char-count">0 chars</span>
+            </div>
+            <div class="raw-preview" id="raw-preview-box"></div>
+          </div>
+        </div>
 
         <div class="divider"></div>
 
@@ -611,19 +737,73 @@ Minimum version required to store current data is: `+i+`.
 
   <!-- Application Logic -->
   <script>
+    let currentPreset = 'url';
+    let currentPayload = 'https://example.com';
     let currentResolution = 1024;
     let currentSVG = '';
 
+    function escapeWifi(str) {
+      return str.replace(/([\\;,:"])/g, '\\$1');
+    }
+
+    function toggleWifiPasswordView() {
+      const sec = document.getElementById('wifi-security').value;
+      document.getElementById('wifi-pass-group').style.display = (sec === 'nopass') ? 'none' : 'block';
+    }
+
     function setPreset(type) {
+      currentPreset = type;
       document.querySelectorAll('.preset-btn').forEach(b => {
         b.classList.toggle('active', b.getAttribute('data-preset') === type);
       });
-      const input = document.getElementById('payload-input');
-      if (type === 'url') input.value = 'https://example.com';
-      else if (type === 'wifi') input.value = 'WIFI:S:MyNetwork;T:WPA;P:SecretPassword123;;';
-      else if (type === 'email') input.value = 'mailto:contact@example.com?subject=Hello';
-      else if (type === 'phone') input.value = 'tel:+15551234567';
-      else if (type === 'text') input.value = 'Offline note stored directly inside the QR code.';
+
+      document.getElementById('section-url').style.display = (type === 'url') ? 'block' : 'none';
+      document.getElementById('section-wifi').style.display = (type === 'wifi') ? 'block' : 'none';
+      document.getElementById('section-email').style.display = (type === 'email') ? 'block' : 'none';
+      document.getElementById('section-phone').style.display = (type === 'phone') ? 'block' : 'none';
+      document.getElementById('section-text').style.display = (type === 'text') ? 'block' : 'none';
+
+      computePayload();
+    }
+
+    function computePayload() {
+      if (currentPreset === 'url') {
+        currentPayload = document.getElementById('input-url').value.trim();
+      } else if (currentPreset === 'wifi') {
+        const ssid = document.getElementById('wifi-ssid').value.trim();
+        const sec = document.getElementById('wifi-security').value;
+        const pass = document.getElementById('wifi-pass').value;
+        const hidden = document.getElementById('wifi-hidden').checked;
+        const h = hidden ? 'H:true;' : '';
+
+        if (!ssid) {
+          currentPayload = '';
+        } else if (sec === 'nopass') {
+          currentPayload = 'WIFI:S:' + escapeWifi(ssid) + ';T:nopass;;' + h;
+        } else {
+          currentPayload = 'WIFI:S:' + escapeWifi(ssid) + ';T:' + sec + ';P:' + escapeWifi(pass) + ';' + h + ';';
+        }
+      } else if (currentPreset === 'email') {
+        const email = document.getElementById('email-to').value.trim();
+        const subject = document.getElementById('email-sub').value.trim();
+        const body = document.getElementById('email-body').value.trim();
+        if (!email) {
+          currentPayload = '';
+        } else {
+          const params = [];
+          if (subject) params.push('subject=' + encodeURIComponent(subject));
+          if (body) params.push('body=' + encodeURIComponent(body));
+          currentPayload = 'mailto:' + email + (params.length ? '?' + params.join('&') : '');
+        }
+      } else if (currentPreset === 'phone') {
+        const phone = document.getElementById('input-phone').value.trim();
+        currentPayload = phone ? ('tel:' + phone) : '';
+      } else if (currentPreset === 'text') {
+        currentPayload = document.getElementById('input-text').value;
+      }
+
+      document.getElementById('raw-preview-box').innerText = currentPayload || '(Empty)';
+      document.getElementById('char-count').innerText = currentPayload.length + ' chars';
       renderQR();
     }
 
@@ -644,7 +824,7 @@ Minimum version required to store current data is: `+i+`.
 
     function getConfig() {
       return {
-        value: document.getElementById('payload-input').value.trim(),
+        value: currentPayload,
         ecLevel: document.getElementById('ec-level').value,
         fgColor: document.getElementById('fg-color').value,
         bgColor: document.getElementById('bg-color').value,
@@ -780,7 +960,6 @@ Minimum version required to store current data is: `+i+`.
             shareLabel.innerText = 'Shared!';
             setTimeout(() => { shareLabel.innerText = 'Share QR Code'; }, 2500);
           } else {
-            // Fallback: copy to clipboard
             await copyImage();
             shareLabel.innerText = 'Copied to Clipboard!';
             setTimeout(() => { shareLabel.innerText = 'Share QR Code'; }, 2500);
@@ -792,7 +971,9 @@ Minimum version required to store current data is: `+i+`.
     }
 
     // Initial render
-    window.addEventListener('DOMContentLoaded', renderQR);
+    window.addEventListener('DOMContentLoaded', () => {
+      computePayload();
+    });
   </script>
 </body>
 </html>
